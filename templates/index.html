@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI-Powered MCQ Generator</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #4361ee;
+            --secondary-color: #3f37c9;
+            --accent-color: #4895ef;
+            --success-color: #4cc9f0;
+        }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #4361ee 0%, #3f37c9 100%);
+            padding: 50px 20px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .container {
+            max-width: 800px;
+            background-color: rgba(255, 255, 255, 0.95);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .app-title {
+            color: var(--primary-color);
+            font-weight: 700;
+            margin-bottom: 30px;
+            text-align: center;
+            font-size: 2.5rem;
+        }
+
+        .app-subtitle {
+            color: #666;
+            text-align: center;
+            margin-bottom: 40px;
+            font-size: 1.1rem;
+        }
+
+        .upload-area {
+            border: 3px dashed var(--accent-color);
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            margin-bottom: 30px;
+            transition: all 0.3s ease;
+            background-color: rgba(255, 255, 255, 0.8);
+        }
+
+        .upload-area:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .upload-area.dragover {
+            border-color: var(--success-color);
+            background-color: rgba(76, 201, 240, 0.1);
+            transform: scale(1.02);
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            color: var(--primary-color);
+            margin-bottom: 20px;
+        }
+
+        .upload-text {
+            color: #666;
+            margin-bottom: 20px;
+            font-size: 1.1rem;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .custom-file-input {
+            display: none;
+        }
+
+        .custom-file-label {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 12px 25px;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-block;
+        }
+
+        .custom-file-label:hover {
+            background-color: var(--secondary-color);
+            transform: translateY(-2px);
+        }
+
+        .generate-btn {
+            background-color: var(--accent-color);
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            width: 100%;
+            max-width: 200px;
+        }
+
+        .generate-btn:hover {
+            background-color: var(--secondary-color);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        #status {
+            margin-top: 30px;
+            padding: 15px;
+            border-radius: 10px;
+            font-weight: 500;
+        }
+
+        .status-icon {
+            margin-right: 10px;
+        }
+
+        #downloadArea {
+            text-align: center;
+            margin-top: 30px;
+        }
+
+        .download-btn {
+            background-color: var(--success-color);
+            color: white;
+            padding: 12px 30px;
+            border-radius: 25px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            display: inline-block;
+        }
+
+        .download-btn:hover {
+            background-color: var(--accent-color);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            color: white;
+        }
+
+        .supported-formats {
+            text-align: center;
+            margin-top: 30px;
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .format-badge {
+            background-color: rgba(67, 97, 238, 0.1);
+            color: var(--primary-color);
+            padding: 5px 15px;
+            border-radius: 15px;
+            margin: 0 5px;
+            font-weight: 500;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .processing {
+            animation: pulse 2s infinite;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header-actions text-end mb-3">
+            <a href="/dashboard" class="btn btn-outline-light">
+                <i class="fas fa-chart-bar"></i> Dashboard
+            </a>
+        </div>
+
+        <h1 class="app-title">
+            <i class="fas fa-robot"></i> AI-Powered MCQ Generator
+        </h1>
+        <p class="app-subtitle">
+            Transform your educational content into engaging multiple-choice questions with the power of AI
+        </p>
+        
+        <div class="upload-area" id="dropZone">
+            <form id="uploadForm" enctype="multipart/form-data">
+                <i class="fas fa-cloud-upload-alt upload-icon"></i>
+                <p class="upload-text">Drag and drop your file here or click to select</p>
+                
+                <div class="file-input-wrapper">
+                    <input type="file" id="fileInput" name="file" class="custom-file-input" accept=".txt,.pdf,.docx">
+                    <label for="fileInput" class="custom-file-label">
+                        <i class="fas fa-file-alt"></i> Choose File
+                    </label>
+                </div>
+
+                <div class="row mt-4">
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="numQuestions">Number of Questions</label>
+                            <input type="number" class="form-control" id="numQuestions" name="num_questions" 
+                                   value="5" min="1" max="20">
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="difficulty">Difficulty Level</label>
+                            <select class="form-control" id="difficulty" name="difficulty">
+                                <option value="mixed">Mixed</option>
+                                <option value="easy">Easy</option>
+                                <option value="medium">Medium</option>
+                                <option value="hard">Hard</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="topic">Topic Focus (Optional)</label>
+                            <input type="text" class="form-control" id="topic" name="topic" 
+                                   placeholder="e.g., History, Science">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label>Export Format</label>
+                            <div class="btn-group w-100" role="group">
+                                <input type="checkbox" class="btn-check" id="txtFormat" name="format_txt" checked>
+                                <label class="btn btn-outline-primary" for="txtFormat">TXT</label>
+                                
+                                <input type="checkbox" class="btn-check" id="docxFormat" name="format_docx" checked>
+                                <label class="btn btn-outline-primary" for="docxFormat">DOCX</label>
+                                
+                                <input type="checkbox" class="btn-check" id="pdfFormat" name="format_pdf">
+                                <label class="btn btn-outline-primary" for="pdfFormat">PDF</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label>Additional Options</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="includeExplanations" checked>
+                                <label class="form-check-label" for="includeExplanations">
+                                    Include Explanations
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="saveToBank" checked>
+                                <label class="form-check-label" for="saveToBank">
+                                    Save to Question Bank
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <button type="submit" class="generate-btn btn btn-primary mt-4">
+                    <i class="fas fa-magic"></i> Generate MCQs
+                </button>
+            </form>
+        </div>
+
+        <div class="supported-formats">
+            Supported Formats: 
+            <span class="format-badge"><i class="fas fa-file-pdf"></i> PDF</span>
+            <span class="format-badge"><i class="fas fa-file-word"></i> DOCX</span>
+            <span class="format-badge"><i class="fas fa-file-alt"></i> TXT</span>
+        </div>
+
+        <div id="status" class="alert" style="display: none;"></div>
+        
+        <div id="downloadArea" style="display: none;" class="text-center">
+            <a id="downloadLink" class="download-btn" href="#">
+                <i class="fas fa-download"></i> Download MCQs
+            </a>
+        </div>
+    </div>
+
+    <script>
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const uploadForm = document.getElementById('uploadForm');
+        const status = document.getElementById('status');
+        const downloadArea = document.getElementById('downloadArea');
+        const downloadLink = document.getElementById('downloadLink');
+        const fileLabel = document.querySelector('.custom-file-label');
+
+        // Drag and drop functionality
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, highlight, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, unhighlight, false);
+        });
+
+        function highlight(e) {
+            dropZone.classList.add('dragover');
+        }
+
+        function unhighlight(e) {
+            dropZone.classList.remove('dragover');
+        }
+
+        dropZone.addEventListener('drop', handleDrop, false);
+
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            fileInput.files = files;
+            updateFileName(files[0]);
+        }
+
+        // Update file name display
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                updateFileName(e.target.files[0]);
+            }
+        });
+
+        function updateFileName(file) {
+            const icon = getFileIcon(file.name);
+            fileLabel.innerHTML = `<i class="${icon}"></i> ${file.name}`;
+        }
+
+        function getFileIcon(fileName) {
+            const ext = fileName.split('.').pop().toLowerCase();
+            switch(ext) {
+                case 'pdf':
+                    return 'fas fa-file-pdf';
+                case 'docx':
+                    return 'fas fa-file-word';
+                default:
+                    return 'fas fa-file-alt';
+            }
+        }
+
+        // Form submission
+        uploadForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData(uploadForm);
+            
+            if (!fileInput.files[0]) {
+                showStatus('Please select a file', 'danger');
+                return;
+            }
+
+            const submitBtn = e.target.querySelector('.generate-btn');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+            dropZone.classList.add('processing');
+            
+            showStatus('<i class="fas fa-cog fa-spin status-icon"></i>AI is analyzing your content and generating MCQs...', 'info');
+            
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showStatus('<i class="fas fa-check-circle status-icon"></i>MCQs generated successfully!', 'success');
+                    downloadLink.href = `/download/${data.result_file}`;
+                    downloadArea.style.display = 'block';
+                    downloadArea.classList.add('animate__animated', 'animate__fadeInUp');
+                } else {
+                    showStatus('<i class="fas fa-exclamation-circle status-icon"></i>' + (data.error || 'An error occurred'), 'danger');
+                }
+            } catch (error) {
+                showStatus('<i class="fas fa-exclamation-triangle status-icon"></i>An error occurred while processing your request', 'danger');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-magic"></i> Generate MCQs';
+                dropZone.classList.remove('processing');
+            }
+        });
+
+        function showStatus(message, type) {
+            status.innerHTML = message;
+            status.className = `alert alert-${type}`;
+            status.style.display = 'block';
+        }
+    </script>
+</body>
+</html>

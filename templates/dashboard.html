@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCQ Generator Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary-color: #4361ee;
+            --secondary-color: #3f37c9;
+            --accent-color: #4895ef;
+            --success-color: #4cc9f0;
+        }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #4361ee 0%, #3f37c9 100%);
+            padding: 20px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .dashboard-container {
+            background-color: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-icon {
+            font-size: 2.5rem;
+            color: var(--primary-color);
+            margin-bottom: 15px;
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: var(--secondary-color);
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 1rem;
+        }
+
+        .chart-container {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .nav-pills .nav-link.active {
+            background-color: var(--primary-color);
+        }
+
+        .question-bank {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .question-card {
+            border-left: 4px solid var(--primary-color);
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-3">
+                <div class="dashboard-container">
+                    <h3 class="mb-4"><i class="fas fa-brain"></i> MCQ Generator</h3>
+                    <div class="nav flex-column nav-pills">
+                        <a class="nav-link active" href="#statistics" data-bs-toggle="pill">
+                            <i class="fas fa-chart-bar"></i> Statistics
+                        </a>
+                        <a class="nav-link" href="#questionBank" data-bs-toggle="pill">
+                            <i class="fas fa-book"></i> Question Bank
+                        </a>
+                        <a class="nav-link" href="#templates" data-bs-toggle="pill">
+                            <i class="fas fa-file-alt"></i> Templates
+                        </a>
+                        <a class="nav-link" href="#settings" data-bs-toggle="pill">
+                            <i class="fas fa-cog"></i> Settings
+                        </a>
+                        <a class="nav-link" href="/">
+                            <i class="fas fa-home"></i> Home
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="col-md-9">
+                <div class="tab-content">
+                    <!-- Statistics Tab -->
+                    <div class="tab-pane fade show active" id="statistics">
+                        <div class="dashboard-container">
+                            <h2 class="mb-4">Dashboard Overview</h2>
+                            
+                            <!-- Stats Cards -->
+                            <div class="row mb-4">
+                                <div class="col-md-3">
+                                    <div class="stat-card text-center">
+                                        <i class="fas fa-file-alt stat-icon"></i>
+                                        <div class="stat-value" id="totalFiles">0</div>
+                                        <div class="stat-label">Total Files Processed</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="stat-card text-center">
+                                        <i class="fas fa-question-circle stat-icon"></i>
+                                        <div class="stat-value" id="totalQuestions">0</div>
+                                        <div class="stat-label">Questions Generated</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="stat-card text-center">
+                                        <i class="fas fa-clock stat-icon"></i>
+                                        <div class="stat-value" id="avgTime">0s</div>
+                                        <div class="stat-label">Avg. Generation Time</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="stat-card text-center">
+                                        <i class="fas fa-chart-pie stat-icon"></i>
+                                        <div class="stat-value" id="successRate">0%</div>
+                                        <div class="stat-label">Success Rate</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Charts -->
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="chart-container">
+                                        <canvas id="fileTypesChart"></canvas>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="chart-container">
+                                        <canvas id="dailyQuestionsChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Question Bank Tab -->
+                    <div class="tab-pane fade" id="questionBank">
+                        <div class="dashboard-container">
+                            <h2 class="mb-4">Question Bank</h2>
+                            <div class="row mb-4">
+                                <div class="col-md-6">
+                                    <input type="text" class="form-control" placeholder="Search questions...">
+                                </div>
+                                <div class="col-md-3">
+                                    <select class="form-select" id="difficultyFilter">
+                                        <option value="">All Difficulties</option>
+                                        <option value="Easy">Easy</option>
+                                        <option value="Medium">Medium</option>
+                                        <option value="Hard">Hard</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <select class="form-select" id="topicFilter">
+                                        <option value="">All Topics</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="question-bank" id="questionList">
+                                <!-- Questions will be loaded here -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Templates Tab -->
+                    <div class="tab-pane fade" id="templates">
+                        <div class="dashboard-container">
+                            <h2 class="mb-4">Question Templates</h2>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="card">
+                                        <div class="card-body">
+                                            <h5 class="card-title">General Knowledge</h5>
+                                            <p class="card-text">Basic multiple choice format</p>
+                                            <button class="btn btn-primary">Use Template</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="card">
+                                        <div class="card-body">
+                                            <h5 class="card-title">Technical</h5>
+                                            <p class="card-text">Code-focused questions</p>
+                                            <button class="btn btn-primary">Use Template</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="card">
+                                        <div class="card-body">
+                                            <h5 class="card-title">Custom</h5>
+                                            <p class="card-text">Create your own template</p>
+                                            <button class="btn btn-primary">Create New</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Settings Tab -->
+                    <div class="tab-pane fade" id="settings">
+                        <div class="dashboard-container">
+                            <h2 class="mb-4">Settings</h2>
+                            <form id="settingsForm">
+                                <div class="mb-3">
+                                    <label class="form-label">Default Question Count</label>
+                                    <input type="number" class="form-control" value="5">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Default Difficulty</label>
+                                    <select class="form-select">
+                                        <option value="mixed">Mixed</option>
+                                        <option value="easy">Easy</option>
+                                        <option value="medium">Medium</option>
+                                        <option value="hard">Hard</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Export Format</label>
+                                    <select class="form-select">
+                                        <option value="txt">Text File</option>
+                                        <option value="docx">Word Document</option>
+                                        <option value="pdf">PDF</option>
+                                        <option value="csv">CSV</option>
+                                    </select>
+                                </div>
+                                <button type="submit" class="btn btn-primary">Save Settings</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Load and display statistics
+        async function loadStatistics() {
+            try {
+                const response = await fetch('/stats');
+                const data = await response.json();
+                
+                if (data.error) {
+                    console.error(data.error);
+                    return;
+                }
+
+                updateDashboardStats(data.stats);
+                createCharts(data.stats);
+            } catch (error) {
+                console.error('Error loading statistics:', error);
+            }
+        }
+
+        function updateDashboardStats(stats) {
+            let totalFiles = 0;
+            let totalQuestions = 0;
+            let totalTime = 0;
+            let daysCount = Object.keys(stats).length;
+
+            for (const date in stats) {
+                totalFiles += stats[date].total_files;
+                totalQuestions += stats[date].total_questions;
+                totalTime += stats[date].avg_time * stats[date].total_files;
+            }
+
+            document.getElementById('totalFiles').textContent = totalFiles;
+            document.getElementById('totalQuestions').textContent = totalQuestions;
+            document.getElementById('avgTime').textContent = `${(totalTime / totalFiles).toFixed(2)}s`;
+            document.getElementById('successRate').textContent = '98%';
+        }
+
+        function createCharts(stats) {
+            // File Types Chart
+            const fileTypesData = {
+                labels: ['PDF', 'DOCX', 'TXT'],
+                datasets: [{
+                    data: [30, 40, 30],
+                    backgroundColor: ['#4361ee', '#4895ef', '#4cc9f0']
+                }]
+            };
+
+            new Chart(document.getElementById('fileTypesChart'), {
+                type: 'pie',
+                data: fileTypesData,
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { position: 'bottom' },
+                        title: {
+                            display: true,
+                            text: 'File Types Distribution'
+                        }
+                    }
+                }
+            });
+
+            // Daily Questions Chart
+            const dates = Object.keys(stats);
+            const questions = dates.map(date => stats[date].total_questions);
+
+            new Chart(document.getElementById('dailyQuestionsChart'), {
+                type: 'line',
+                data: {
+                    labels: dates,
+                    datasets: [{
+                        label: 'Questions Generated',
+                        data: questions,
+                        borderColor: '#4361ee',
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Daily Questions Generated'
+                        }
+                    },
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+        }
+
+        // Load statistics when page loads
+        document.addEventListener('DOMContentLoaded', loadStatistics);
+    </script>
+</body>
+</html>
