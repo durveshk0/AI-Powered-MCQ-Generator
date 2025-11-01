@@ -1,0 +1,18 @@
+# Ignore everything
+*
+
+# But not these directories
+!results/
+!templates/
+!uploads/
+!.gitignore
+!README.md
+
+# Ignore specific files within the allowed directories
+results/*.txt
+results/*.docx
+results/*.pdf
+uploads/*
+__pycache__/
+*.pyc
+.env
